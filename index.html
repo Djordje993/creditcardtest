@@ -1,0 +1,231 @@
+<html>
+<head>
+    <title>Card App</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-wrap">
+        <div id="add-new-button" class="card-size">
+            <p>
+                <span>+</span><br>
+                ADD NEW CARD
+            </p>
+        </div>
+        <div id="cards-wrap">
+            
+        </div>
+    </div>
+
+    <div style="display: none;" id="add-new-popup"></div>
+
+
+    <script>
+        let allCards=[];
+        document.getElementById('add-new-button').onclick= function(){
+            showAddNew();
+        }
+
+        function Card(name, cardNumber, expiresOn){
+            this.name=name;
+            this.cardNumber=cardNumber;
+            this.expiresOn=expiresOn;
+
+            this.showSelf= function(parent){
+                let mainDiv=document.createElement('div');
+                mainDiv.className="card card-size";
+
+                let cardType=document.createElement('img');
+                cardType.alt='cardType';
+                cardType.className='card-type';
+                let firstNum=Math.floor(this.cardNumber[0]/1000);
+                if(firstNum==4){cardType.src='assets/visa.png'}
+                if(firstNum==5){cardType.src='assets/mastercard.png'}
+                if(firstNum==6){cardType.src='assets/discover.png'}
+
+                let codebar=document.createElement('img');
+                codebar.alt='codebar';
+                codebar.className='codebar';
+                codebar.src='assets/codebar.png';
+
+                let numDiv=document.createElement('div');
+                numDiv.className='card-number-wrap';
+                for(let i=0; i<this.cardNumber.length; i++){
+                    let span=document.createElement('span');
+                    span.innerHTML=this.cardNumber[i];
+                    numDiv.appendChild(span);
+                }
+
+                let nameDiv=document.createElement('div');
+                nameDiv.className='name-date-wrap';
+                let spanName=document.createElement('span');
+                spanName.innerHTML=this.name;
+                let spanDate=document.createElement('span');
+                spanDate.innerHTML=this.expiresOn;
+                nameDiv.appendChild(spanName);
+                nameDiv.appendChild(spanDate);
+                
+                mainDiv.appendChild(cardType);
+                mainDiv.appendChild(codebar);
+                mainDiv.appendChild(numDiv);
+                mainDiv.appendChild(nameDiv);
+
+                parent.appendChild(mainDiv);
+            }
+        }
+
+        function showAddNew(editCard){
+            let popup=document.getElementById('add-new-popup');
+            popup.innerHTML="";
+            popup.style.display="flex";
+            let isEditing;
+            let card;
+            if(editCard){
+                card=editCard;
+                isEditing=true;
+            }
+            else{
+                card=new Card("",["","","",""],"");
+                isEditing=false;
+            }
+            handleNewCard(card, isEditing);
+        }
+        function hideAddNew(){
+            let popup=document.getElementById('add-new-popup');
+            popup.innerHTML="";
+            popup.style.display="none";
+        }
+
+        function handleNewCard(card, isEditing){
+            let mainDiv= document.createElement('div');
+            mainDiv.innerHTML="";
+
+            let divCard= document.createElement('div');
+            divCard.id='new-card-display';
+            card.showSelf(divCard);
+
+            let inputDiv= document.createElement('div');
+
+            let nameInput= document.createElement('input');
+            nameInput.type='text';
+            nameInput.value=card.name;
+            nameInput.id='new-name-input';
+            nameInput.onkeyup=function(e){
+                handleNewNameInput(e, card);
+            }
+            let nameInpP= document.createElement('p');
+            nameInpP.innerHTML="Name: <br>";
+            nameInpP.appendChild(nameInput);
+
+            let numInpP= document.createElement('p');
+            numInpP.innerHTML="Card Number: <br>";
+            for(let i=0; i<4; i++){
+                let input= document.createElement('input');
+                input.type='text';
+                input.value=card.cardNumber[i];
+                input.maxLength='4';
+                input.style.width='50px';
+                input.id="new-number-"+i;
+                input.onkeyup=function(e){
+                    handleNewNumberInput(e, i, card);
+                }
+                numInpP.appendChild(input);
+            }
+
+            let dateInput= document.createElement('input');
+            dateInput.type='text';
+            dateInput.value=card.expiresOn;
+            dateInput.id='new-date-input';
+            dateInput.onkeyup= function(e){
+                handleNewDateInput(e, card);
+            }
+            let dateInpP= document.createElement('p');
+            dateInpP.innerHTML="Expires On: <br>";
+            dateInpP.appendChild(dateInput);
+
+            let saveButton=document.createElement('button');
+            saveButton.innerHTML='SAVE';
+            saveButton.onclick=function(e){
+                try{errorCheck(card)}
+                catch(err){
+                    alert(err);
+                    return;
+                }
+
+                if(!isEditing){allCards.push(card);}
+                refreshAllCards();
+                hideAddNew();
+            }
+            let seveButtonP= document.createElement('p');
+            seveButtonP.appendChild(saveButton);
+
+            inputDiv.appendChild(nameInpP);
+            inputDiv.appendChild(numInpP);
+            inputDiv.appendChild(dateInpP);
+            inputDiv.appendChild(seveButtonP);
+
+            mainDiv.appendChild(divCard);
+            mainDiv.appendChild(inputDiv);
+
+            let parent= document.getElementById('add-new-popup');
+            parent.innerHTML="";
+            parent.appendChild(mainDiv);
+        }
+
+        function handleNewNameInput(e, card){
+            card.name= e.target.value;
+            refreshDivCard(card);
+        }
+
+        function handleNewNumberInput(e, place, card){
+            card.cardNumber[place]=parseInt(e.target.value);
+            refreshDivCard(card);;
+        }
+
+        function handleNewDateInput(e, card){
+            card.expiresOn=e.target.value;
+            refreshDivCard(card);
+        }
+
+        function refreshDivCard(card){
+            let divCard=document.getElementById('new-card-display');
+            divCard.innerHTML="";
+            card.showSelf(divCard);
+        }
+        function refreshAllCards(){
+            let mainDiv= document.getElementById('cards-wrap');
+            mainDiv.innerHTML="";
+            for(let i=0; i<allCards.length; i++){
+                allCards[i].showSelf(mainDiv);
+            }
+            let allCardsDivs=document.getElementsByClassName('card');
+            for(let i=0; i<allCardsDivs.length; i++){
+                allCardsDivs[i].onclick= function(e){
+                    showAddNew(allCards[i]);
+                }
+            }
+        }
+
+        //-----------------------------------
+
+
+        function nameErrorCheck(name){
+            if(name.length<1){throw 'Invalid Name'}
+        }
+        function numberErrorCheck(number){
+            if(parseInt(number)<1000 || isNaN(number)){throw 'Invalid Number'}
+        }
+        function firstNumberErrorCheck(number){
+            if(number!=4 && number!=5 && number!=6){throw 'First Number must be 4,5 or 6'}
+        }
+        function errorCheck(card){
+            nameErrorCheck(card.name);
+            for(let i=0;i<card.cardNumber.length; i++){
+                numberErrorCheck(parseInt(card.cardNumber[i]));
+            }
+            firstNumberErrorCheck(Math.floor(card.cardNumber[0]/1000));
+        }
+
+    </script>
+</body>
+</html>
